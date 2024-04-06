@@ -2603,6 +2603,10 @@ bool srt::CUDT::interpretSrtHandshake(const CHandShake& hs,
         HLOGC(cnlog.Debug, log << CONID() << "interpretSrtHandshake: extracting KMREQ/RSP type extension");
 
 #ifdef SRT_ENABLE_ENCRYPTION
+        LOGC(cnlog.Warn,
+                 log << CONID()
+                     << "QEEP, HS KMREQ: in encryption.");
+
         if (!m_pCryptoControl->hasPassphrase())
         {
             if (m_config.bEnforcedEnc)
