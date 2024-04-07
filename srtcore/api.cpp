@@ -252,8 +252,6 @@ int srt::CUDTUnited::startup()
     if (0 != WSAStartup(wVersionRequested, &wsaData))
         throw CUDTException(MJ_SETUP, MN_NONE, WSAGetLastError());
 #endif
-    
-    HLOGC(inlog.Warn, log << "QEEP: CCryptoControl.globalInit" );
 
     CCryptoControl::globalInit();
 

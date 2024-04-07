@@ -82,7 +82,6 @@ void srt::CCryptoControl::globalInit()
 #ifdef SRT_ENABLE_ENCRYPTION
     // We need to force the Cryspr to be initialized during startup to avoid the
     // possibility of multiple threads initialzing the same static data later on.
-LOGP(cnlog.Warn, "QEEP: HaiCryptCryspr_Get_Instance");
     HaiCryptCryspr_Get_Instance();
 #endif
 }
@@ -470,7 +469,6 @@ int srt::CCryptoControl::processSrtMsg_KMRSP(const uint32_t* srtdata, size_t len
 void srt::CCryptoControl::sendKeysToPeer(CUDT* sock SRT_ATR_UNUSED, int iSRTT SRT_ATR_UNUSED)
 {
     sync::ScopedLock lck(m_mtxLock);
-    //HLOGC(cnlog.Debug, log<< "QEEP: sendKeysToPeer");
     if (!m_hSndCrypto || m_SndKmState == SRT_KM_S_UNSECURED)
     {
         HLOGC(cnlog.Debug, log << "sendKeysToPeer: NOT sending/regenerating keys: "

@@ -14,12 +14,24 @@ written by
 
    2022-05-19 (jdube)
         OpenSSL EVP CRYSPR/4SRT (CRYypto Service PRovider for SRT).
+
+Updated by
+    Quantropi Inc.
+    2024-40-06 (Dafu)
+        Support Quantropi QiSpace QEEP Provider 
 *****************************************************************************/
 
 #include "hcrypt.h"
 
 #include <string.h>
 //#define AES
+#define DEBUG
+
+#ifdef DEBUG
+#define DBG_PRINT printf
+#else
+#define DBG_PRINT(...)
+#endif
 
 #ifndef AES
 #include <openssl/provider.h>
@@ -66,6 +78,7 @@ int crysprOpenSSL_EVP_AES_SetKey(
     char *kstr_in = kstr;
     char *iv_in = NULL;
 #ifdef AES
+DBG_PRINT("IN %s\n", __func__);
     int  idxKlen = (int)((kstr_len / 8) - 2); /* key_len index in cipher_fnptr array in [0,1,2] range */
     switch (cipher_type)
     {
@@ -106,19 +119,18 @@ int crysprOpenSSL_EVP_AES_SetKey(
     iv_in = NULL;
 #else
     
-    //OSSL_LIB_CTX *libctx = NULL;
-    if (prov == NULL) prov=OSSL_PROVIDER_load(NULL, "qispace_qeep_d");
+    if (prov == NULL) prov=OSSL_PROVIDER_load(NULL, "qispace_qeep");
     if (prov != NULL) {
-        printf("QEEP: EVP_AES_SetKey qispace_qeep loaded, cipher:%d, enc:%d, aes_keylen: %d \n", (int) cipher_type, (int)bEncrypt, (int)kstr_len);
+        DBG_PRINT("QEEP: EVP_AES_SetKey qispace_qeep loaded, cipher:%d, enc:%d, aes_keylen: %d \n", (int) cipher_type, (int)bEncrypt, (int)kstr_len);
          cipher = EVP_CIPHER_fetch(NULL, "qispace_qeep", NULL);
     } else {
-        printf("QEEP: load QEEP failed \n");
+        HCRYPT_LOG(LOG_ERR, "%s", "OSSL_PROVIDER_load(qispace_qeep...) failed\n");
+        return (-1);
     }
     kstr_in = DEFAULT_KEY;
     iv_in = DEFAULT_IV;
     EVP_CipherInit(aes_key, cipher, NULL, NULL, 0);  //init cipher without key before setup parm
     EVP_CIPHER_CTX_set_key_length(aes_key, DEMO_QEEP_KEY_SIZE);
-    printf("QEEP: EVP_CIPHER_CTX_set_key_length \n");
 #endif
     if (bEncrypt)
     { /* Encrypt key */
@@ -142,7 +154,7 @@ int crysprOpenSSL_EVP_AES_SetKey(
 static CRYSPR_cb* crysprOpenSSL_EVP_Open(CRYSPR_methods* cryspr, size_t max_len)
 {
     CRYSPR_cb* cryspr_cb = crysprHelper_Open(cryspr, sizeof(*cryspr_cb), max_len);
-printf("QEEP: crysprOpenSSL_EVP_Open \n");
+DBG_PRINT("IN %s\n", __func__);
 
     if (NULL == cryspr_cb)
     {
@@ -161,18 +173,16 @@ printf("QEEP: crysprOpenSSL_EVP_Open \n");
 
 static int crysprOpenSSL_EVP_Close(CRYSPR_cb* cryspr_cb)
 {
-
+DBG_PRINT("IN %s\n", __func__);
     if (NULL != cryspr_cb)
     {
         EVP_CIPHER_CTX_free(cryspr_cb->aes_sek[0]);
         EVP_CIPHER_CTX_free(cryspr_cb->aes_sek[1]);
         EVP_CIPHER_CTX_free(cryspr_cb->aes_kek);
     }
-//
 #ifndef AES  
   if (prov != NULL) {
     OSSL_PROVIDER_unload(prov);
-    printf("QEEP: crysprOpenSSL_EVP_Close  QiSpace-unloaded \n");
   }
 #endif
     return (crysprHelper_Close(cryspr_cb));
@@ -187,12 +197,12 @@ int crysprOpenSSL_EVP_AES_EcbCipher(bool                 bEncrypt, /* true:encry
                                     unsigned char* out_txt, /* dst (cipher text if encrypt, clear text otherwise) */
                                     size_t*        outlen_p)       /* in/out dst len */
 {
+    DBG_PRINT("IN %s\n", __func__);
 #ifdef AES
     int    c_len = 0, f_len = 0;
-    printf("QEEP: crysprOpenSSL_EVP_AES_EcbCipher, inlen=%d \n", (int)inlen);
     if (!EVP_CipherUpdate(aes_key, out_txt, &c_len, indata, (int)inlen))
     {
-        printf("QEEP: crysprOpenSSL_EVP_AES_EcbCipher, inlen=%d \n", (int)inlen);
+        DBG_PRINT("QEEP: crysprOpenSSL_EVP_AES_EcbCipher, inlen=%d \n", (int)inlen);
         HCRYPT_LOG(LOG_ERR, "EVP_CipherUpdate(%p, out, %d, in, %d) failed\n", aes_key, c_len, inlen);
         return -1;
     }
@@ -272,6 +282,7 @@ int crysprOpenSSL_EVP_AES_CtrCipher(bool                 bEncrypt, /* true:encry
                                     unsigned char*       out_txt)        /* dest */
 
 {
+DBG_PRINT("IN %s\n", __func__);
 #ifdef AES
     int    c_len = 0, f_len = 0;
     if (!EVP_CipherInit(aes_key, NULL, NULL, iv, bEncrypt)) //EVP_CipherInit_ex(aes_key, NULL, NULL, NULL, iv, bEncrypt)
@@ -281,7 +292,7 @@ int crysprOpenSSL_EVP_AES_CtrCipher(bool                 bEncrypt, /* true:encry
     }
     if (!EVP_CipherUpdate(aes_key, out_txt, &c_len, indata, (int)inlen))
     {
-        printf("QEEP: crysprOpenSSL_EVP_AES_CtrCipher, inlen=%d \n", (int)inlen);
+        DBG_PRINT("QEEP: crysprOpenSSL_EVP_AES_CtrCipher, inlen=%d \n", (int)inlen);
         HCRYPT_LOG(LOG_ERR, "EVP_CipherUpdate(%p, out, %d, in, %d) failed\n", aes_key, c_len, inlen);
         return -1;
     }
@@ -333,7 +344,7 @@ int crysprOpenSSL_EVP_AES_CtrCipher(bool                 bEncrypt, /* true:encry
 #endif /*ENABLE_HAICRYPT_LOGGING*/
         return -1;
     }
-    printf("QEEP: in %02x,%02x ; out: %02x,%02x \n", indata[0], indata[1], out_txt[0], out_txt[1]);
+    DBG_PRINT("QEEP: in %02x,%02x ; out: %02x,%02x \n", indata[0], indata[1], out_txt[0], out_txt[1]);
     return 0;
  #endif
 }
@@ -348,9 +359,36 @@ int crysprOpenSSL_EVP_AES_GCMCipher(bool                 bEncrypt, /* true:encry
                                     unsigned char*       out_txt,
                                     unsigned char*       out_tag)  /* auth tag */
 {
-    int c_len, f_len;
-printf("QEEP: crysprOpenSSL_EVP_AES_GCMCipher \n");
+    int    c_len = 0, f_len = 0;
+DBG_PRINT("IN %s\n", __func__);
+#ifndef AES
+    // simulatored GCM interface, 
+    //out_tag is 16 byte, stub implement here
+    int i;
+    if (aad != NULL && out_tag != NULL ) {
+        memcpy(out_tag, iv, 16);
+        for (i =0; i< aadlen; i++) out_tag[0] = out_tag[0] ^ aad[i];
+    }
 
+    if (!EVP_CipherInit(aes_key, NULL, NULL, iv, bEncrypt)) 
+    {
+        HCRYPT_LOG(LOG_ERR, "%s\n", "GCM EVP_CipherInit() failed");
+        return -1;
+    }
+    if (!EVP_CipherUpdate(aes_key, out_txt, &c_len, indata, (int)inlen))
+    {
+        DBG_PRINT("QEEP: crysprOpenSSL_EVP_AES_CtrCipher, inlen=%d \n", (int)inlen);
+        HCRYPT_LOG(LOG_ERR, "EVP_CipherUpdate(%p, out, %d, in, %d) failed\n", aes_key, c_len, inlen);
+        return -1;
+    }
+    f_len = 0;
+    if (0 == EVP_CipherFinal_ex(aes_key, &out_txt[c_len], &f_len))
+    {
+        return -1;
+    }
+
+    return 0;
+#else
     /* allows reusing of 'e' for multiple encryption cycles */
     if (!EVP_CipherInit_ex(aes_key, NULL, NULL, NULL, iv, -1))
     {
@@ -414,6 +452,7 @@ printf("QEEP: crysprOpenSSL_EVP_AES_GCMCipher \n");
     }
 
     return 0;
+#endif
 }
 
 /*
@@ -429,7 +468,8 @@ int crysprOpenSSL_EVP_KmPbkdf2(CRYSPR_cb*     cryspr_cb,
                                unsigned char* out)        /* derived key */
 {
     (void)cryspr_cb;
-printf("QEEP: crysprOpenSSL_EVP_KmPbkdf2, pass: %s key_len:$d \n", passwd, (int)key_len);
+
+DBG_PRINT("IN: %s, (pass: %s key_len:$d salt_len:%d)\n", __func__, passwd, (int)key_len, (int)salt_len);
 
     int rc = PKCS5_PBKDF2_HMAC_SHA1(passwd, (int)passwd_len, salt, (int)salt_len, itr, (int)key_len, out);
     return (rc == 1 ? 0 : -1);
@@ -440,7 +480,6 @@ int crysprOpenSSL_EVP_KmWrap(CRYSPR_cb* cryspr_cb, unsigned char* wrap, const un
 {
     crysprOpenSSL_EVP_cb* aes_data = (crysprOpenSSL_EVP_cb*)cryspr_cb;
     EVP_CIPHER_CTX*       kek      = CRYSPR_GETKEK(cryspr_cb); // key encrypting key
-printf("QEEP: crysprOpenSSL_EVP_KmWrap, sek: %s \n", (char*)sek);
     return (((seklen + HAICRYPT_WRAPKEY_SIGN_SZ) == (unsigned int)AES_wrap_key(kek, NULL, wrap, sek, seklen)) ? 0 : -1);
 }
 
@@ -451,7 +490,6 @@ int crysprOpenSSL_EVP_KmUnwrap(CRYSPR_cb*           cryspr_cb,
 {
     crysprOpenSSL_EVP_cb* aes_data = (crysprOpenSSL_EVP_cb*)cryspr_cb;
     EVP_CIPHER_CTX*       kek      = CRYSPR_GETKEK(cryspr_cb); // key encrypting key
-printf("QEEP: crysprOpenSSL_EVP_KmUnwrap, sek: %s \n", (char*)sek);
     return (((wraplen - HAICRYPT_WRAPKEY_SIGN_SZ) == (unsigned int)AES_unwrap_key(kek, NULL, sek, wrap, wraplen)) ? 0
                                                                                                                   : -1);
 }
@@ -461,7 +499,6 @@ static CRYSPR_methods crysprOpenSSL_EVP_methods;
 
 CRYSPR_methods* crysprOpenSSL_EVP(void)
 {
-printf("QEEP: crysprOpenSSL_EVP\n");
     if (NULL == crysprOpenSSL_EVP_methods.open)
     {
         crysprInit(&crysprOpenSSL_EVP_methods); // Default/fallback methods
