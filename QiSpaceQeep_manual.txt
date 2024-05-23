@@ -1,0 +1,34 @@
+# Build SRT to enable "Qispace_QEEP" instead of AES
+    1. Comment out "AES" the line 27 at this file "cryspr-openssl-evp.c"
+        Default is commented out, to reverst back to use "AES", just un-comment.
+    2. Config project, according to "README" build section for target enviorment
+        './configure --use-enclib=openssl-evp --enable-aead-api-preview '
+    3. Build
+        'make'
+
+#DEMO Method
+    1. Using SRT protocol with Qispace QEEP
+      - Network Setup, Using "srt-live-transmit", "ffplay" and "ffmpeg"
+                          Host 1               |                          |            Host 2
+        "ffmpeg" -- UDP -> "srt-live-transmit" |  ------> SRT ( ) ------> | "srt-live-transmit" -- UDP --> "ffplay"
+                                               |  AES or QEEP Encrypted   |  
+
+    2. Build srt and srt-live-transmit with QEEP, named as srt-live-transmit-QEEP
+
+    3. Build srt and srt-live-transmit with AES, named as srt-live-transmit-AES
+
+    4. Install "qispace qeep provider" under OpenSSL 3.x module directory, ex: /usr/local/lib/ossl-modules for MacOS
+       Command to get OpenSSL module directory:  'openssl version -m'
+       Copy "qispace_qeep.so" for Linux; "qispace_qeep.dll" for Windows, "qispace_qeep.dylib" for MacOS to the OpenSSL module lib
+
+    5. Script for demo
+        Host 1:
+           ffmpeg -f lavfi -re -i smptebars=duration=60:size=1280x720:rate=30 -f lavfi -re -i sine=frequency=1000:duration=60:sample_rate=44100 -pix_fmt yuv420p -c:v libx264 -b:v 1000k -g 30 -keyint_min 120 -profile:v baseline  -preset veryfast -f mpegts "udp://127.0.0.1:5000?pkt_size=1316"
+           ./srt-live-transmit udp://:5000 srt://127.0.0.1:4200?passphrase=1234567890123456
+
+        Host 2:
+          ./srt-live-transmit srt://:4200?passphrase=1234567890123456 udp://127.0.0.1:5010
+          ./srt-live-transmit udp://:5010   file://con | ffplay -f mpegts -
+
+
+
