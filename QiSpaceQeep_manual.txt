@@ -1,10 +1,28 @@
-# Build SRT to enable "Qispace_QEEP" instead of AES
-    1. Comment out "AES" the line 27 at this file "cryspr-openssl-evp.c"
-        Default is commented out, to reverst back to use "AES", just un-comment.
-    2. Config project, according to "README" build section for target enviorment
-        './configure --use-enclib=openssl-evp --enable-aead-api-preview '
-    3. Build
-        'make'
+# Build SRT to enable "Qispace" instead of AES based on Openssl EVP 
+    ## Linux
+        1. Comment out "AES" the line 27 at this file "cryspr-openssl-evp.c"
+            Default is commented out, to reverst back to use "AES", just un-comment.
+        2. Config project, according to "README" build section for target enviorment
+            './configure --use-enclib=openssl-evp --enable-aead-api-preview '
+        3. Build
+            'make'
+    ## Windows
+      mkdir build
+      cd build; cmake  ../  -DENABLE_STDCXX_SYNC=ON -DUSE_ENCLIB=openssl-evp -DUSE_CXX_STD=11 -A x64
+      cmake --build .
+
+# Build with Quantropi QiSpace SDK
+    ##  Set Quantropi QiSpace SDK:
+        export QISPACE_HEADERS="/opt/qispace_sdk"
+        export QISPACE_LIBRARIES="/opt/qispace_sdk"
+
+    ## On Linux similar OS
+        './configure --use-enclib=qispace'
+        make
+    ## On Windows
+        mkdir build
+        cd build; cmake  ../  -DENABLE_STDCXX_SYNC=ON -DUSE_ENCLIB=qispace -DUSE_CXX_STD=11 -A x64
+        cmake --build .
 
 #DEMO Method
     1. Using SRT protocol with Qispace QEEP

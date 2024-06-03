@@ -13,6 +13,10 @@
 #include "cryspr-openssl-evp.h"
 #define cryspr4SRT()  crysprOpenSSL_EVP()
 #define CRYSPR_IMPL_DESC "OpenSSL-EVP"
+#elif defined(USE_QISPACE)
+#include "cryspr-qispace.h"
+#define cryspr4SRT()  crysprQiSpace()
+#define CRYSPR_IMPL_DESC "QiSpace"
 #elif defined(USE_GNUTLS)
 #include "cryspr-gnutls.h"
 #define cryspr4SRT()  crysprGnuTLS()
