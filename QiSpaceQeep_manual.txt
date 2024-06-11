@@ -13,10 +13,10 @@
 
 # Build with Quantropi QiSpace SDK
     ##  Set Quantropi QiSpace SDK:
-        export QISPACE_HEADERS="/opt/qispace_sdk"
-        export QISPACE_LIBRARIES="/opt/qispace_sdk"
+        export QISPACE_SDK_DIR="/home/dev/workspace/srt/qispace-QEEP-SDK-R1.9.0-ubuntu"
+        export QISPACE_LIBRARIES="libqeep-gcc-x64.a"
 
-    ## On Linux similar OS
+    ## On Linux similar OS "qispace" options is default enabled
         './configure --use-enclib=qispace'
         make
     ## On Windows
