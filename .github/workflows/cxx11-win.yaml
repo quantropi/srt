@@ -6,19 +6,61 @@ on:
   pull_request:
     branches: [ master ]
 
+  workflow_dispatch:
+    inputs:
+      qispace_sdk_ver:
+        description: qispace sdk version, eg R1.9.0
+        type: string
+        required: true
+
 jobs:
   build:
 
     name: windows
     runs-on: windows-latest
 
+    env:
+      QISPACE_SDK_VER: "${{ inputs.qispace_sdk_ver || 'R1.9.0' }}"
+
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.ORG_S3_AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.ORG_S3_AWS_SECRET_ACCESS_KEY }}
+        aws-region: ca-central-1
+
+    - name: Download QiSpace SDK
+      run: |
+        mkdir qispace_qeep
+        aws s3 cp s3://qispace-sdk-release/${{ env.QISPACE_SDK_VER }}/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-windows.zip qispace_qeep/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-windows.zip
+        tar -xf qispace_qeep/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-windows.zip -C qispace_qeep
+        Move-Item -Path "qispace_qeep\qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-windows\*" -Destination "qispace_qeep" -Force
+        Remove-Item -Path "qispace_qeep\qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-windows" -Recurse -Force
+
+    - name: Setup cmake
+      uses: jwlawson/actions-setup-cmake@v2
+      with:
+        cmake-version: '3.16.x'
+
     - name: configure
       run: |
-        md _build && cd _build
-        cmake ../ -DENABLE_STDCXX_SYNC=ON -DENABLE_UNITTESTS=ON -DENABLE_BONDING=ON
+        mkdir _build
+        cd _build
+        cmake ../ -G "Visual Studio 16 2019" -A x64 -DENABLE_STDCXX_SYNC=ON -DUSE_ENCLIB=qispace -DENABLE_TESTING=ON -DENABLE_EXAMPLES=ON -DQISPACE_SDK_DIR="../qispace_qeep"
+
     - name: build
-      run: cd _build && cmake --build ./ --config Release
+      run: cd _build && cmake --build . --config Release
+
     - name: test
-      run: cd _build && ctest -E "TestIPv6.v6_calls_v4|TestConnectionTimeout.BlockingLoop" --extra-verbose -C Release
+      run: cd _build && ctest -C Release --extra-verbose
+
+    - name: Archive build results
+      uses: actions/upload-artifact@v4
+      with:
+        name: qsrt-qeep
+        path: |
+          _build
+        retention-days: 1
