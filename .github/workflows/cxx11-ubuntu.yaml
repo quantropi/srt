@@ -1,4 +1,4 @@
-name: cxx11
+name: cxx11-ubuntu
 
 on:
   push:
@@ -34,6 +34,8 @@ jobs:
         mkdir -p qispace_qeep
         aws s3 cp s3://qispace-sdk-release/${{ env.QISPACE_SDK_VER }}/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-ubuntu.zip qispace_qeep/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-ubuntu.zip
         unzip qispace_qeep/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-ubuntu.zip -d qispace_qeep
+        mv qispace_qeep/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-ubuntu/* qispace_qeep/
+        rmdir qispace_qeep/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-ubuntu
 
     - name: configure
       run: |
