@@ -5,6 +5,7 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -13,11 +14,27 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Download QiSpace SDK
+      uses: quantropi/SDK_CICD_pipelines/.github/actions/aws_s3_download@master
+      with:
+        output_folder: qispace_qeep
+        need_unzip: true
+        s3_url: qispace-sdk-release/${{vars.QISPACE_SDK_VER}}/qispace-QEEP-SDK-${{vars.QISPACE_SDK_VER}}-ubuntu.zip
+        aws_access_key: ${{ secrets.ORG_S3_AWS_ACCESS_KEY_ID }}
+        aws_secret_key: ${{ secrets.ORG_S3_AWS_SECRET_ACCESS_KEY }}
     - name: configure
       run: |
         mkdir _build && cd _build
-        cmake ../ -DENABLE_STDCXX_SYNC=ON -DENABLE_UNITTESTS=ON -DENABLE_BONDING=ON -DENABLE_TESTING=ON -DENABLE_EXAMPLES=ON
+        cmake ../ -DENABLE_STDCXX_SYNC=ON -DUSE_ENCLIB=qispace -DENABLE_TESTING=ON -DENABLE_EXAMPLES=ON -DQISPACE_SDK_DIR="../qispace_qeep"
     - name: build
       run: cd _build && cmake --build ./
     - name: test
       run: cd _build && ctest --extra-verbose
+
+    - name: Archive build results
+      uses: actions/upload-artifact@v4
+      with:
+        name: qsrt-qeep
+        path: |
+          _build
+        retention-days: 1

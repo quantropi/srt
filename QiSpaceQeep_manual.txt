@@ -12,13 +12,23 @@
       cmake --build .
 
 # Build with Quantropi QiSpace SDK
-    ##  Set Quantropi QiSpace SDK:
+    ##  Set Quantropi QiSpace SDK via ENV or -D:
         export QISPACE_SDK_DIR="/home/dev/workspace/srt/qispace-QEEP-SDK-R1.9.0-ubuntu"
         export QISPACE_LIBRARIES="libqeep-gcc-x64.a"
+     Or 
+      -DQISPACE_SDK_DIR="/home/dev/workspace/srt/qispace-QEEP-SDK-R1.9.0-ubuntu"
 
     ## On Linux similar OS "qispace" options is default enabled
         './configure --use-enclib=qispace'
         make
+        // Using cmake only
+        mkdir build; cd build
+        cmake  ../  -DENABLE_STDCXX_SYNC=ON -DUSE_ENCLIB=qispace -DUSE_CXX_STD=11 -DQISPACE_SDK_DIR="/home/dev/workspace/srt/qispace-QEEP-SDK-R1.9.0-ubuntu"
+        cmake --build .
+    ## On MacOS
+        mkdir build; cd build
+        cmake  ../  -DENABLE_STDCXX_SYNC=ON -DUSE_ENCLIB=qispace -DUSE_CXX_STD=14
+        cmake --build .
     ## On Windows
         mkdir build
         cd build; cmake  ../  -DENABLE_STDCXX_SYNC=ON -DUSE_ENCLIB=qispace -DUSE_CXX_STD=11 -A x64
