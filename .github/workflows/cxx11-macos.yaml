@@ -1,24 +1,50 @@
-name: cxx11
+name: cxx11-macos
 
 on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+  # push:
+  #   branches: [ master ]
+  # pull_request:
+  #   branches: [ master ]
+  workflow_dispatch:
+    inputs:
+      qispace_sdk_ver:
+        description: qispace sdk version, eg R1.9.0
+        type: string
+        required: true
 
 jobs:
   build:
     name: macos
     runs-on: macos-latest
+    env:
+      QISPACE_SDK_VER: "${{ inputs.qispace_sdk_ver || 'R1.9.0' }}"
 
     steps:
     - name: GoogleTest
       run: brew install googletest
-    - uses: actions/checkout@v3
+
+    - uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.ORG_S3_AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.ORG_S3_AWS_SECRET_ACCESS_KEY }}
+        aws-region: ca-central-1
+
+    - name: Download QiSpace SDK
+      run: |
+        mkdir -p qispace_qeep
+        aws s3 cp s3://qispace-sdk-release/${{ env.QISPACE_SDK_VER }}/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-ubuntu.zip qispace_qeep/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-ubuntu.zip
+        unzip qispace_qeep/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-ubuntu.zip -d qispace_qeep
+        mv qispace_qeep/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-ubuntu/* qispace_qeep/
+        rmdir qispace_qeep/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-ubuntu
+
     - name: configure
       run: |
         mkdir _build && cd _build
         cmake ../ -DENABLE_STDCXX_SYNC=ON -DENABLE_ENCRYPTION=OFF -DENABLE_UNITTESTS=ON -DENABLE_BONDING=ON -DUSE_CXX_STD=14
+
     - name: build
       run: cd _build && cmake --build ./
     - name: test
