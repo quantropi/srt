@@ -46,7 +46,7 @@ jobs:
         cmake ../ -DENABLE_STDCXX_SYNC=ON -DUSE_ENCLIB=qispace -DENABLE_TESTING=ON -DENABLE_EXAMPLES=ON -DUSE_CXX_STD=14 -DQISPACE_SDK_DIR="../qispace_qeep"
 
     - name: build
-      run: cd _build && cmake --build ./ --config Release
+      run: cd _build && cmake --build ./
     - name: test
       run: cd _build && ctest --extra-verbose
 
