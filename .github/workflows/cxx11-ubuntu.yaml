@@ -6,22 +6,35 @@ on:
   pull_request:
     branches: [ v1.5.3.qeep ]
   workflow_dispatch:
+    inputs:
+      qispace_sdk_ver:
+        description: qispace sdk version, eg R1.9.0
+        type: string
+        required: true
 
 jobs:
   build:
     name: ubuntu
     runs-on: ubuntu-20.04
+    env:
+      QISPACE_SDK_VER: "${{ inputs.qispace_sdk_ver || 'R1.9.0' }}"
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Download QiSpace SDK
-      uses: quantropi/SDK_CICD_pipelines/.github/actions/aws_s3_download@master
+    - uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
       with:
-        output_folder: qispace_qeep
-        need_unzip: true
-        s3_url: qispace-sdk-release/${{vars.QISPACE_SDK_VER}}/qispace-QEEP-SDK-${{vars.QISPACE_SDK_VER}}-ubuntu.zip
-        aws_access_key: ${{ secrets.ORG_S3_AWS_ACCESS_KEY_ID }}
-        aws_secret_key: ${{ secrets.ORG_S3_AWS_SECRET_ACCESS_KEY }}
+        aws-access-key-id: ${{ secrets.ORG_S3_AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.ORG_S3_AWS_SECRET_ACCESS_KEY }}
+        aws-region: ca-central-1
+
+    - name: Download QiSpace SDK
+      run: |
+        mkdir -p qispace_qeep
+        aws s3 cp s3://qispace-sdk-release/${{ env.QISPACE_SDK_VER }}/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-ubuntu.zip qispace_qeep/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-ubuntu.zip
+        unzip qispace_qeep/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-ubuntu.zip -d qispace_qeep
+
     - name: configure
       run: |
         mkdir _build && cd _build
