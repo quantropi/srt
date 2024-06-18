@@ -49,7 +49,7 @@ jobs:
       run: |
         mkdir _build
         cd _build
-        cmake ../ -G "Visual Studio 16 2019" -A x64 -DENABLE_STDCXX_SYNC=ON -DUSE_ENCLIB=qispace -DENABLE_TESTING=ON -DENABLE_EXAMPLES=ON -DQISPACE_SDK_DIR="../qispace_qeep"
+        cmake ../ -G "Visual Studio 17 2022" -A x64 -DENABLE_STDCXX_SYNC=ON -DUSE_ENCLIB=qispace -DENABLE_TESTING=ON -DENABLE_EXAMPLES=ON -DQISPACE_SDK_DIR="../qispace_qeep"
 
     - name: build
       run: cd _build && cmake --build . --config Release
