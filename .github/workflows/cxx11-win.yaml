@@ -1,10 +1,10 @@
-name: cxx11
+name: cxx11-win
 
 on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+  # push:
+  #   branches: [ master ]
+  # pull_request:
+  #   branches: [ master ]
 
   workflow_dispatch:
     inputs:

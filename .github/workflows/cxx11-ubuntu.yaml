@@ -1,10 +1,10 @@
 name: cxx11-ubuntu
 
 on:
-  push:
-    branches: [ v1.5.3.qeep ]
-  pull_request:
-    branches: [ v1.5.3.qeep ]
+  # push:
+  #   branches: [ v1.5.3.qeep ]
+  # pull_request:
+  #   branches: [ v1.5.3.qeep ]
   workflow_dispatch:
     inputs:
       qispace_sdk_ver:
