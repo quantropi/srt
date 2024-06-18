@@ -2,9 +2,9 @@ name: cxx11
 
 on:
   push:
-    branches: [ master ]
+    branches: [ v1.5.3.qeep ]
   pull_request:
-    branches: [ master ]
+    branches: [ v1.5.3.qeep ]
   workflow_dispatch:
 
 jobs:
