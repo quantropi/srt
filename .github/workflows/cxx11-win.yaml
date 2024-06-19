@@ -17,7 +17,7 @@ jobs:
   build:
 
     name: windows
-    runs-on: windows-2019
+    runs-on: windows-latest
 
     env:
       QISPACE_SDK_VER: "${{ inputs.qispace_sdk_ver || 'R1.9.0' }}"
