@@ -60,7 +60,15 @@ This type reserves room in the CRYPSPR control block for Haicrypt KEK and SEK
 It is set from hte keystring through CRYSPR_methods.aes_set_key and passed
 to CRYSPR_methods.aes_*.
 */
+#define _QEEP_ENABLED 
+#ifdef _QEEP_ENABLED
+typedef struct _tag_CRYSPR_AES_QEEP_CTX {
+    EVP_CIPHER_CTX  *evp_ctx;
+    int qeep_mode;
+} CRYSPR_AESCTX;
+#else
 typedef EVP_CIPHER_CTX CRYSPR_AESCTX; /* CRYpto Service PRovider AES key context */
+#endif
 
 struct tag_CRYSPR_methods* crysprOpenSSL_EVP(void);
 
