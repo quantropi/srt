@@ -504,6 +504,7 @@ int crysprOpenSSL_EVP_AES_GCMCipher(bool                 bEncrypt, /* true:encry
 
 }
 
+#if 0
 static int _hexstring2number(char *in, unsigned char *out)
 {
   char byte_val;
@@ -543,6 +544,7 @@ static int _hexstring2number(char *in, unsigned char *out)
   }
   return outlen;
 }
+#endif
 
 /*
  * Password-based Key Derivation Function
@@ -599,16 +601,32 @@ int crysprOpenSSL_EVP_KmUnwrap(CRYSPR_cb*           cryspr_cb,
 #endif /*CRYSPR_HAS_AESKWRAP*/
 
 int crysprOpenSSL_EVP_KmWrap_Qeep(CRYSPR_cb* cryspr_cb, unsigned char* wrap, const unsigned char* sek, unsigned int seklen) {
+    int rc;
+    #ifdef _QEEP_ENABLED
+        CRYSPR_AESCTX *aes_kek = CRYSPR_GETKEK(cryspr_cb);
+        if (aes_kek->qeep_mode > 0 ) {
+            //for qeep, using QEEP CTR
+            memcpy(wrap, sek, seklen);
+            memcpy(&(wrap[seklen]),  _QEEP_DEFAULT_IV, HAICRYPT_WRAPKEY_SIGN_SZ);
+            rc =  crysprOpenSSL_EVP_AES_CtrCipher(true, /* true:encrypt, false:decrypt */
+                                        aes_kek,  /* CRYpto Service PRovider AES Key context */
+                                        _QEEP_DEFAULT_IV,       /* iv */
+                                        wrap,   /* src */
+                                        seklen + HAICRYPT_WRAPKEY_SIGN_SZ,    /* length */
+                                        wrap);
+            HEXDUMP("sek", sek, seklen);
+            HEXDUMP("wrap", wrap, seklen+HAICRYPT_WRAPKEY_SIGN_SZ);
+            return (rc);
+        
+        }
+    #endif
     #if CRYSPR_HAS_AESKWRAP
         // using current WRAP
         return crysprOpenSSL_EVP_KmWrap(cryspr_cb,  wrap,  sek,  seklen);
     #else
 
         //fallbak using AES_ECB
-        int rc = crysprFallback_AES_WrapKey(cryspr_cb,  wrap,  sek,  seklen);
-        HEXDUMP("sek", sek, seklen);
-        HEXDUMP("wrap", wrap, seklen+8);
-        
+        rc = crysprFallback_AES_WrapKey(cryspr_cb,  wrap,  sek,  seklen);
         return (rc);
     #endif
 }
@@ -617,14 +635,39 @@ int crysprOpenSSL_EVP_KmUnwrap_Qeep(CRYSPR_cb*         cryspr_cb,
                                unsigned char*       sek, // Stream encrypting key
                                const unsigned char* wrap,
                                unsigned int         wraplen) {
+    int rc;
+    #ifdef _QEEP_ENABLED
+        CRYSPR_AESCTX *aes_kek = CRYSPR_GETKEK(cryspr_cb);
+        if (aes_kek->qeep_mode > 0 ) {
+            //for qeep, using QEEP CTR
+            unsigned char * sek_sig = malloc(wraplen);
+            rc =  crysprOpenSSL_EVP_AES_CtrCipher(false, /* true:encrypt, false:decrypt */
+                                        aes_kek,  /* CRYpto Service PRovider AES Key context */
+                                        _QEEP_DEFAULT_IV,       /* iv */
+                                        wrap,   /* src */
+                                        wraplen ,    /* length */
+                                        sek_sig);
+            HEXDUMP("wrap", wrap, wraplen);
+            HEXDUMP("sek_sig", sek_sig, wraplen);
+            if (rc == 0 && memcmp(_QEEP_DEFAULT_IV, &sek_sig[wraplen - HAICRYPT_WRAPKEY_SIGN_SZ], HAICRYPT_WRAPKEY_SIGN_SZ) == 0) 
+            {
+                memcpy(sek, sek_sig, wraplen - HAICRYPT_WRAPKEY_SIGN_SZ);
+                rc = 0;
+            } else 
+            {
+                rc = -1;
+            }
+            free(sek_sig);
+            return (rc);
+        
+        }
+    #endif
     #if CRYSPR_HAS_AESKWRAP
         // using current WRAP
         return crysprOpenSSL_EVP_KmUnwrap(cryspr_cb,  sek,  wrap,  wraplen);
     #else
         //fallbak using AES_ECB
-        int rc = crysprFallback_AES_UnwrapKey(cryspr_cb,  sek,  wrap,  wraplen);
-        HEXDUMP("wrap", wrap, wraplen);
-        HEXDUMP("sek", sek, wraplen-8);
+        rc = crysprFallback_AES_UnwrapKey(cryspr_cb,  sek,  wrap,  wraplen);
         return (rc);
     #endif
 }
@@ -636,8 +679,8 @@ DBG_PRINT("IN: %s  \n", __func__ );
 #ifdef _QEEP_ENABLED
     DBG_PRINT("     aes_kek-qeep_mode: %d  \n",aes_kek->qeep_mode );
     if (aes_kek->qeep_mode > 0 ) {
-        //for qeep, using QEEP ECB
-        if (cryspr_cb->cryspr->aes_set_key(HCRYPT_CTX_MODE_AESECB, bWrap, kek, kek_len, aes_kek)) {
+        //for qeep, using QEEP CTR
+        if (cryspr_cb->cryspr->aes_set_key(HCRYPT_CTX_MODE_AESCTR, bWrap, kek, kek_len, aes_kek)) {
             HCRYPT_LOG(LOG_ERR, "aes_set_%s_key(kek) failed\n", bWrap? "encrypt": "decrypt");
             return(-1);
         }
