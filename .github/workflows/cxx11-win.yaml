@@ -63,9 +63,9 @@ jobs:
         echo "${{ github.workspace }}"
         mkdir Openssl
         7z x openssl-3.4.0.zip -oOpenssl -y
-        cd Openssl && tree
+        cd Openssl && tree && cd ..
         mkdir _build
-        cd _build && cmake ../ -DUSE_CXX_STD=11 -A x64 -DENABLE_STDCXX_SYNC=ON -DUSE_ENCLIB=${{ inputs.ENCLIB }} -DENABLE_TESTING=ON -DENABLE_EXAMPLES=ON -DQISPACE_SDK_DIR="../qispace_qeep" -DSSL_LIBRARY_DIRS="${{ github.workspace }}\Openssl\x64" -DSSL_INCLUDE_DIRS="${{ github.workspace }}\Openssl\x64"
+        cd _build && cmake ../ -DUSE_CXX_STD=11 -A x64 -DENABLE_STDCXX_SYNC=ON -DUSE_ENCLIB=${{ inputs.ENCLIB }} -DENABLE_TESTING=ON -DENABLE_EXAMPLES=ON -DQISPACE_SDK_DIR="../qispace_qeep" -DSSL_LIBRARY_DIRS="${{ github.workspace }}\Openssl\x64\lib" -DSSL_INCLUDE_DIRS="${{ github.workspace }}\Openssl\x64\include"
 
     - name: build
       run: cd _build && cmake --build .
