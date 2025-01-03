@@ -38,7 +38,7 @@ jobs:
         aws-region: ca-central-1
 
     - name: Download QiSpace SDK
-      if inputs.qispace_sdk_ver != ''
+      if: inputs.qispace_sdk_ver != ''
       run: |
         mkdir -p qispace_qeep
         aws s3 cp s3://qispace-sdk-release/${{ env.QISPACE_SDK_VER }}/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-ubuntu.zip qispace_qeep/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-ubuntu.zip
