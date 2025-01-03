@@ -24,7 +24,7 @@ jobs:
   build:
 
     name: windows
-    runs-on: windows-2019
+    runs-on: windows-2022
 
     env:
       QISPACE_SDK_VER: "${{ inputs.qispace_sdk_ver || 'R1.9.0' }}"
@@ -55,9 +55,13 @@ jobs:
 
     - name: configure
       run: |
+        curl -L -o openssl-3.4.0.zip https://download.firedaemon.com/FireDaemon-OpenSSL/openssl-3.4.0.zip
+        echo "${{ github.workspace }}"
+        mkdir Openssl
+        7z x openssl-3.4.0.zip -oOpenssl -y
         mkdir _build
         cd _build
-        cmake ../ -A x64 -DENABLE_STDCXX_SYNC=ON -DUSE_ENCLIB=${{ inputs.ENCLIB }} -DENABLE_TESTING=ON -DENABLE_EXAMPLES=ON -DUSE_CXX_STD=11 -DQISPACE_SDK_DIR="../qispace_qeep"
+        cmake ../ -A x64 -DENABLE_STDCXX_SYNC=ON -DUSE_ENCLIB=${{ inputs.ENCLIB }} -DENABLE_TESTING=ON -DENABLE_EXAMPLES=ON -DUSE_CXX_STD=11 -DQISPACE_SDK_DIR="../qispace_qeep" -DSSL_LIBRARY_DIRS="${{ github.workspace }}\Openssl\x64" -DSSL_INCLUDE_DIRS="${{ github.workspace }}\Openssl\x64"
 
     - name: build
       run: cd _build && cmake --build .

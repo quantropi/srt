@@ -46,6 +46,7 @@ jobs:
 
     - name: configure
       run: |
+        brew install automake autoconf libtool
         mkdir _build && cd _build
         cmake ../ -DENABLE_STDCXX_SYNC=ON -DUSE_ENCLIB=${{ inputs.ENCLIB }} -DENABLE_TESTING=ON -DENABLE_EXAMPLES=ON -DUSE_CXX_STD=14 -DQISPACE_SDK_DIR="../qispace_qeep"
 
