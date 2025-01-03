@@ -1,24 +1,83 @@
-name: cxx11
+name: cxx11-win
 
 on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+  # push:
+  #   branches: [ master ]
+  # pull_request:
+  #   branches: [ master ]
+
+  workflow_dispatch:
+    inputs:
+      qispace_sdk_ver:
+        description: qispace sdk version, eg R1.9.0
+        type: string
+        required: false
+      ENCLIB:
+        description: option of cypto library
+        type: choice
+        options: 
+        - openssl-evp
+        - qispace
+        - mbedtls
 
 jobs:
   build:
 
     name: windows
-    runs-on: windows-latest
+    runs-on: windows-2022
+
+    env:
+      QISPACE_SDK_VER: "${{ inputs.qispace_sdk_ver || 'R1.9.0' }}"
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.ORG_S3_AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.ORG_S3_AWS_SECRET_ACCESS_KEY }}
+        aws-region: ca-central-1
+
+    - name: Download QiSpace SDK
+      if: inputs.qispace_sdk_ver != ''
+      run: |
+        mkdir qispace_qeep
+        aws s3 cp s3://qispace-sdk-release/${{ env.QISPACE_SDK_VER }}/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-windows.zip qispace_qeep/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-windows.zip
+        tar -xf qispace_qeep/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-windows.zip -C qispace_qeep
+        Move-Item -Path "qispace_qeep\qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-windows\*" -Destination "qispace_qeep" -Force
+        Remove-Item -Path "qispace_qeep\qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-windows" -Recurse -Force
+
+    # - name: Setup cmake
+    #   uses: jwlawson/actions-setup-cmake@v2
+    #   with:
+    #     cmake-version: '3.16.x'
+    - name: Set up Visual Studio shell
+      uses: egor-tensin/vs-shell@v2
+      with:
+        arch: x64
+
     - name: configure
       run: |
-        md _build && cd _build
-        cmake ../ -DENABLE_STDCXX_SYNC=ON -DENABLE_ENCRYPTION=OFF -DENABLE_UNITTESTS=ON -DENABLE_BONDING=ON -DUSE_CXX_STD=c++11
+        curl -L -o openssl-3.4.0.zip https://download.firedaemon.com/FireDaemon-OpenSSL/openssl-3.4.0.zip
+        echo "${{ github.workspace }}"
+        mkdir Openssl
+        7z x openssl-3.4.0.zip -oOpenssl -y
+        cd Openssl && tree && cd ..
+        echo "${{ github.workspace }}\Openssl\x64\bin" >> "$GITHUB_PATH"
+        mkdir _build
+        cd _build && cmake ../ -DUSE_CXX_STD=11 -A x64 -DENABLE_STDCXX_SYNC=ON -DUSE_ENCLIB=${{ inputs.ENCLIB }} -DENABLE_TESTING=ON -DENABLE_EXAMPLES=ON -DQISPACE_SDK_DIR="../qispace_qeep" -DOPENSSL_SSL_LIBRARY="${{ github.workspace }}\Openssl\x64\lib" -DOPENSSL_INCLUDE_DIR="${{ github.workspace }}\Openssl\x64\include"
+
     - name: build
-      run: cd _build && cmake --build ./ --config Release --verbose
+      run: cd _build && cmake --build .
+
     - name: test
-      run: cd _build && ctest -E "TestIPv6.v6_calls_v4|TestConnectionTimeout.BlockingLoop" --extra-verbose -C Release
+      run: cd _build && ctest -C Release --extra-verbose
+
+    - name: Archive build results
+      uses: actions/upload-artifact@v4
+      with:
+        name: qsrt-qeep-win
+        path: |
+          _build
+        retention-days: 365
