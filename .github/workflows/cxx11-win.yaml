@@ -11,7 +11,14 @@ on:
       qispace_sdk_ver:
         description: qispace sdk version, eg R1.9.0
         type: string
-        required: true
+        required: false
+      ENCLIB:
+        description: option of cypto library
+        type: choice
+        options: 
+        - openssl-evp
+        - qispace
+        - mbedtls
 
 jobs:
   build:
@@ -33,6 +40,7 @@ jobs:
         aws-region: ca-central-1
 
     - name: Download QiSpace SDK
+      if: inputs.qispace_sdk_ver != ''
       run: |
         mkdir qispace_qeep
         aws s3 cp s3://qispace-sdk-release/${{ env.QISPACE_SDK_VER }}/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-windows.zip qispace_qeep/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-windows.zip
@@ -49,7 +57,7 @@ jobs:
       run: |
         mkdir _build
         cd _build
-        cmake ../ -A x64 -DENABLE_STDCXX_SYNC=ON -DUSE_ENCLIB=qispace -DENABLE_TESTING=ON -DENABLE_EXAMPLES=ON -DUSE_CXX_STD=11 -DQISPACE_SDK_DIR="../qispace_qeep"
+        cmake ../ -A x64 -DENABLE_STDCXX_SYNC=ON -DUSE_ENCLIB=${{ inputs.ENCLIB }} -DENABLE_TESTING=ON -DENABLE_EXAMPLES=ON -DUSE_CXX_STD=11 -DQISPACE_SDK_DIR="../qispace_qeep"
 
     - name: build
       run: cd _build && cmake --build .
@@ -60,7 +68,7 @@ jobs:
     - name: Archive build results
       uses: actions/upload-artifact@v4
       with:
-        name: qsrt-qeep
+        name: qsrt-qeep-win
         path: |
           _build
-        retention-days: 1
+        retention-days: 365

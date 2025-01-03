@@ -10,8 +10,14 @@ on:
       qispace_sdk_ver:
         description: qispace sdk version, eg R1.9.0
         type: string
-        required: true
-
+        required: false
+      ENCLIB:
+        description: option of cypto library
+        type: choice
+        options: 
+        - openssl-evp
+        - qispace
+        - mbedtls
 jobs:
   build:
     name: macos
@@ -20,9 +26,6 @@ jobs:
       QISPACE_SDK_VER: "${{ inputs.qispace_sdk_ver || 'R1.9.0' }}"
 
     steps:
-    - name: GoogleTest
-      run: brew install googletest
-
     - uses: actions/checkout@v4
 
     - name: Configure AWS credentials
@@ -33,17 +36,18 @@ jobs:
         aws-region: ca-central-1
 
     - name: Download QiSpace SDK
+      if: inputs.qispace_sdk_ver != ''
       run: |
         mkdir -p qispace_qeep
-        aws s3 cp s3://qispace-sdk-release/${{ env.QISPACE_SDK_VER }}/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-ubuntu.zip qispace_qeep/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-ubuntu.zip
-        unzip qispace_qeep/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-ubuntu.zip -d qispace_qeep
-        mv qispace_qeep/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-ubuntu/* qispace_qeep/
-        rmdir qispace_qeep/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-ubuntu
+        aws s3 cp s3://qispace-sdk-release/${{ env.QISPACE_SDK_VER }}/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-macos.zip qispace_qeep/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-macos.zip
+        unzip qispace_qeep/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-macos.zip -d qispace_qeep
+        mv qispace_qeep/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-macos/* qispace_qeep/
+        rmdir qispace_qeep/qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-macos
 
     - name: configure
       run: |
         mkdir _build && cd _build
-        cmake ../ -DENABLE_STDCXX_SYNC=ON -DUSE_ENCLIB=qispace -DENABLE_TESTING=ON -DENABLE_EXAMPLES=ON -DUSE_CXX_STD=14 -DQISPACE_SDK_DIR="../qispace_qeep"
+        cmake ../ -DENABLE_STDCXX_SYNC=ON -DUSE_ENCLIB=${{ inputs.ENCLIB }} -DENABLE_TESTING=ON -DENABLE_EXAMPLES=ON -DUSE_CXX_STD=14 -DQISPACE_SDK_DIR="../qispace_qeep"
 
     - name: build
       run: cd _build && cmake --build ./
@@ -53,7 +57,7 @@ jobs:
     - name: Archive build results
       uses: actions/upload-artifact@v4
       with:
-        name: qsrt-qeep
+        name: qsrt-qeep-macos
         path: |
           _build
-        retention-days: 1
+        retention-days: 365
