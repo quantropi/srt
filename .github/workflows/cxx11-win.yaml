@@ -64,6 +64,7 @@ jobs:
         mkdir Openssl
         7z x openssl-3.4.0.zip -oOpenssl -y
         cd Openssl && tree && cd ..
+        echo "${{ github.workspace }}\Openssl\x64\bin" >> "$GITHUB_PATH"
         mkdir _build
         cd _build && cmake ../ -DUSE_CXX_STD=11 -A x64 -DENABLE_STDCXX_SYNC=ON -DUSE_ENCLIB=${{ inputs.ENCLIB }} -DENABLE_TESTING=ON -DENABLE_EXAMPLES=ON -DQISPACE_SDK_DIR="../qispace_qeep" -DOPENSSL_CRYPTO_LIBRARY="${{ github.workspace }}\Openssl\x64" -DOPENSSL_SSL_LIBRARY="${{ github.workspace }}\Openssl\x64\lib" -DOPENSSL_INCLUDE_DIR="${{ github.workspace }}\Openssl\x64\include"
 
