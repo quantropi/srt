@@ -61,6 +61,16 @@ typedef struct tag_crysprOpenSSL_EVP_cb
     /* Add cryptolib specific data here */
 } crysprOpenSSL_EVP_cb;
 
+extern int crysprFallback_AES_WrapKey(CRYSPR_cb *cryspr_cb,
+                                        unsigned char *out,
+                                        const unsigned char *in,
+                                        unsigned int inlen);
+
+extern int crysprFallback_AES_UnwrapKey(CRYSPR_cb *cryspr_cb,
+                                        unsigned char *out,
+                                        const unsigned char *in,
+                                        unsigned int inlen);
+
 int crysprOpenSSL_EVP_Prng(unsigned char* rn, int len)
 {
     DBG_PRINT("IN-1 %s, len=%d \n", __func__, len);
