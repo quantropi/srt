@@ -65,9 +65,9 @@ jobs:
         7z x openssl-3.4.0.zip -oOpenssl -y
         cd Openssl && tree && cd ..
         echo "${{ github.workspace }}\Openssl\x64\bin" >> "$GITHUB_PATH"
-        openssl version -a
+        "${{ github.workspace }}\Openssl\x64\bin\openssl.exe" version -a
         mkdir _build
-        cd _build && cmake ../ -DUSE_CXX_STD=11 -A x64 -DENABLE_STDCXX_SYNC=ON -DUSE_ENCLIB=${{ inputs.ENCLIB }} -DENABLE_TESTING=OFF -DENABLE_EXAMPLES=OFF  
+        cd _build && cmake ../ -DUSE_CXX_STD=11 -A x64 -DENABLE_STDCXX_SYNC=ON -DUSE_ENCLIB=${{ inputs.ENCLIB }} -DENABLE_TESTING=OFF -DENABLE_EXAMPLES=OFF -DOPENSSL_CRYPTO_LIBRARY="${{ github.workspace }}\Openssl\x64"
 
     - name: build
       run: cd _build && cmake --build .

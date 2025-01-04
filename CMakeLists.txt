@@ -371,6 +371,7 @@ if (ENABLE_ENCRYPTION)
 		# Openssl-EVP requires CRYSPR2
 		add_definitions(-DUSE_OPENSSL_EVP=1 -DCRYSPR2)
 		set (SSL_REQUIRED_MODULES "openssl libcrypto")
+		if ("${OPENSSL_CRYPTO_LIBRARY}" STREQUAL "" )
 		# Try using pkg-config method first if enabled,
 		# fall back to find_package method otherwise
 		if (USE_OPENSSL_PC)
@@ -403,6 +404,17 @@ if (ENABLE_ENCRYPTION)
 			set (SSL_INCLUDE_DIRS ${OPENSSL_INCLUDE_DIR})
 			set (SSL_LIBRARIES ${OPENSSL_LIBRARIES})
 			message(STATUS "SSL via find_package(OpenSSL): -I ${SSL_INCLUDE_DIRS} -l;${SSL_LIBRARIES}")
+		endif()
+		else()
+			#Use OPENSSL_CRYPTO_LIBRARY
+			if(IS_ABSOLUTE ${OPENSSL_CRYPTO_LIBRARY} AND EXISTS ${OPENSSL_CRYPTO_LIBRARY})
+				set (SSL_INCLUDE_DIRS "${OPENSSL_CRYPTO_LIBRARY}/include")
+				set (SSL_LIBRARIES "${OPENSSL_CRYPTO_LIBRARY}/lib/libssl.lib;${OPENSSL_CRYPTO_LIBRARY}/lib/libcrypto.lib")
+			else()
+				set (SSL_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/${OPENSSL_CRYPTO_LIBRARY}/include")
+				set (SSL_LIBRARIES "${CMAKE_CURRENT_BINARY_DIR}/${OPENSSL_CRYPTO_LIBRARY}/lib/libssl.lib;${CMAKE_CURRENT_BINARY_DIR}/${OPENSSL_CRYPTO_LIBRARY}/lib/libcrypto.lib")
+			endif()
+			message(STATUS "SSL via OPENSSL_CRYPTO_LIBRARY: -I ${SSL_INCLUDE_DIRS} -l;${SSL_LIBRARIES}")
 		endif()
 	elseif ("${USE_ENCLIB}" STREQUAL "openssl")
 		# Openssl (Direct-AES API) can use CRYSPR2
