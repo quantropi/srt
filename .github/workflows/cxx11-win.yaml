@@ -74,10 +74,8 @@ jobs:
         mkdir _build
         cd _build
         cmake ../ -DUSE_CXX_STD=11 -A x64 -DENABLE_STDCXX_SYNC=ON -DUSE_ENCLIB=${{ inputs.ENCLIB }} -DENABLE_TESTING=OFF -DENABLE_EXAMPLES=OFF -DOPENSSL_CRYPTO_LIBRARY="${{ github.workspace }}\Openssl\x64"
-        cmake --build .
-
-    # - name: test
-    #   run: cd _build && ctest -C Release --extra-verbose
+        cmake --build . --config Debug
+        cmake --build . --config Release
 
     - name: Archive build results
       uses: actions/upload-artifact@v4
