@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v7
       with:
         path: pull_request
     - name: configure
@@ -32,7 +32,7 @@ jobs:
         abi-dumper libsrt.so -o libsrt-pr.dump -public-headers installdir/usr/local/include/srt/ -lver 0
         SRT_BASE="v1.$SRT_TAG_VERSION.0"
         echo "SRT_BASE=$SRT_BASE" >> "$GITHUB_ENV"
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v7
       with:
         path: tag
         ref: ${{ env.SRT_BASE }}
