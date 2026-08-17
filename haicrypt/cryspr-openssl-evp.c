@@ -229,7 +229,7 @@ static CRYSPR_cb* crysprOpenSSL_EVP_Open(CRYSPR_methods* cryspr, size_t max_len)
     if (prov == NULL) prov=OSSL_PROVIDER_load(NULL, "qispace_provider");
     if (prov != NULL) {
         DBG_PRINT("qispace_provider loaded \n");
-        EVP_CIPHER_CTX *_QEEP_EVP_CIPHER = EVP_CIPHER_fetch(NULL, "qeep", NULL);
+        EVP_CIPHER *_QEEP_EVP_CIPHER = EVP_CIPHER_fetch(NULL, "qeep", NULL);
         if (_QEEP_EVP_CIPHER == NULL ) {
             HCRYPT_LOG(LOG_ERR, "%s", "_QEEP_EVP_CIPHER fetch failed\n");
             DBG_PRINT("_QEEP_EVP_CIPHER fetch failed from qispace_provider\n");

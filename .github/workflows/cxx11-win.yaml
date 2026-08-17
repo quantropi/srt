@@ -30,10 +30,10 @@ jobs:
       QISPACE_SDK_VER: "${{ inputs.qispace_sdk_ver || 'R1.9.0' }}"
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
+      uses: aws-actions/configure-aws-credentials@v6
       with:
         aws-access-key-id: ${{ secrets.ORG_S3_AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.ORG_S3_AWS_SECRET_ACCESS_KEY }}
