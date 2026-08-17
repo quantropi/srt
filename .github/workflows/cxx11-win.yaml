@@ -49,36 +49,36 @@ jobs:
         Remove-Item -Path "qispace_qeep\qispace-QEEP-SDK-${{ env.QISPACE_SDK_VER }}-windows" -Recurse -Force
 
     # - name: Setup cmake
-    #   uses: jwlawson/actions-setup-cmake@v2
+    #   uses: jwlawson/actions-setup-cmake@v3
     #   with:
     #     cmake-version: '3.16.x'
     - name: Set up Visual Studio shell
-      uses: egor-tensin/vs-shell@v2
+      uses: egor-tensin/vs-shell@v3
       with:
         arch: x64
 
-    - name: configure
-      run: |
-        curl -L -o openssl-3.4.0.zip https://download.firedaemon.com/FireDaemon-OpenSSL/openssl-3.4.0.zip
-        echo "${{ github.workspace }}"
-        mkdir Openssl
-        7z x openssl-3.4.0.zip -oOpenssl -y
-        cd Openssl && tree 
-        echo "${{ github.workspace }}\Openssl\x64\bin" >> "$GITHUB_PATH"
-        openssl version -a 
-        cd x64\bin
-        openssl version -a 
+    # - name: configure
+    #   run: |
+    #     curl -L -o openssl-3.4.0.zip https://download.firedaemon.com/FireDaemon-OpenSSL/openssl-3.4.0.zip
+    #     echo "${{ github.workspace }}"
+    #     mkdir Openssl
+    #     7z x openssl-3.4.0.zip -oOpenssl -y
+    #     cd Openssl && tree 
+    #     echo "${{ github.workspace }}\Openssl\x64\bin" >> "$GITHUB_PATH"
+    #     openssl version -a 
+    #     cd x64\bin
+    #     openssl version -a 
 
     - name: build
       run: |
         mkdir _build
         cd _build
-        cmake ../ -DUSE_CXX_STD=11 -A x64 -DENABLE_STDCXX_SYNC=ON -DUSE_ENCLIB=${{ inputs.ENCLIB }} -DENABLE_TESTING=OFF -DENABLE_EXAMPLES=OFF -DOPENSSL_CRYPTO_LIBRARY="${{ github.workspace }}\Openssl\x64"
+        cmake ../ -DUSE_CXX_STD=11 -A x64 -DENABLE_STDCXX_SYNC=ON -DUSE_ENCLIB=${{ inputs.ENCLIB }} -DENABLE_TESTING=OFF -DENABLE_EXAMPLES=OFF  -DQISPACE_SDK_DIR="../qispace_qeep""
         cmake --build . --config Debug
         cmake --build . --config Release
 
     - name: Archive build results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: qsrt-qeep-win
         path: |
