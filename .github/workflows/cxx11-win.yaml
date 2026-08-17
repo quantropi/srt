@@ -53,7 +53,7 @@ jobs:
     #   with:
     #     cmake-version: '3.16.x'
     - name: Set up Visual Studio shell
-      uses: egor-tensin/vs-shell@v3
+      uses: egor-tensin/vs-shell@v2
       with:
         arch: x64
 
